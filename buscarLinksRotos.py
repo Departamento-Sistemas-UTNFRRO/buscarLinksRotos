@@ -27,7 +27,7 @@ import locale
 from googlesearch import search
 
 
-linkMapeados = {
+dominiosMapeados = {
     'a.ln.com.ar': 'www.lanacion',
     'clar.in': 'www.clarin.com',
     'mundial-brasil-2014.clarin.com': 'www.clarin.com',
@@ -44,40 +44,41 @@ textosAOmitir = [
 
 def alargar_url(req):
     try:
-        resolvedURL = urllib.request.urlopen(req)
-        return resolvedURL.url
+        urlResuelta = urllib.request.urlopen(req)
+        return urlResuelta.url
     except Exception as ex:
         print("ERROR" + str(ex))
     return None
 
 
-def ObtenerDominioUrl(link_url):
+def ObtenerDominioUrl(urlLink):
     '''Devuelve el dominio del link'''
-    parsed_uri = urllib.parse.urlparse(link_url)
-    return '{uri.netloc}'.format(uri=parsed_uri)
+    urlTraducida = urllib.parse.urlparse(urlLink)
+    return '{uri.netloc}'.format(uri=urlTraducida)
 
 
-def ObtenerDominioUrlMapeado(link_url):
-    domain = ObtenerDominioUrl(link_url)
-    for viejo in linkMapeados:
-        if(viejo in domain):
-            domain = domain.replace(viejo, linkMapeados[viejo])
-    return domain
+def ObtenerDominioUrlMapeado(urlLink):
+    dominio = ObtenerDominioUrl(urlLink)
+    for viejo, nuevo in dominiosMapeados.items():
+        if(viejo in dominio):
+            dominio = dominio.replace(viejo, nuevo)
+    return dominio
 
 
-def getHtmlFacebook(url):
-    req = urllib.request.Request(url)
+def getHtmlFacebook(urlLink):
+    html = ""
+
     try:
-        resp = urllib.request.urlopen(req)
+        request = urllib.request.Request(urlLink)
+        resp = urllib.request.urlopen(request)
         html = resp.read()
-        return html
     except Exception as ex:
         print("ERROR" + str(ex))
-    return None
+    return html
 
 
-def getTituloFacebook(url):
-    html = getHtmlFacebook(url)
+def getTituloFacebook(urlLink):
+    html = getHtmlFacebook(urlLink)
     titulo_post = ""
     subtitulo_post = ""
 
@@ -87,18 +88,18 @@ def getTituloFacebook(url):
         # Por ejemplo:
         # <div class="hidden_elem"><code id="u_0_q"><!-- <div class="_5pcb _3z-f"> --></code>
 
-        html = html.replace(b'<!--', b'')  # Apertura comentario
-        html = html.replace(b'-->', b'')  # Cierre Comentario
+        html = html.replace('<!--', '')  # Apertura comentario
+        html = html.replace('-->', '')  # Cierre Comentario
         # print(html)
-        content = bs4.BeautifulSoup(html, 'lxml')
+        contenido = bs4.BeautifulSoup(html, 'lxml')
 
-        b = content.find_all('div', {'class': 'mbs _6m6 _2cnj _5s6c'})
-        if b:
-            titulo_post = b[0].getText()
+        divTitulo = contenido.find_all('div', {'class': 'mbs _6m6 _2cnj _5s6c'})
+        if divTitulo:
+            titulo_post = divTitulo[0].getText()
 
-        c = content.find_all('div', {'class': '_6m7 _3bt9'})
-        if c and len(c) > 0:
-            subtitulo_post = c[0].getText()
+        divSubtitulo = contenido.find_all('div', {'class': '_6m7 _3bt9'})
+        if divSubtitulo and len(divSubtitulo) > 0:
+            subtitulo_post = divSubtitulo[0].getText()
 
     return (titulo_post, subtitulo_post)
 
@@ -111,7 +112,7 @@ def getFechaNacion(soup):
     try:
         for tag in soup.find_all("meta"):
             if tag.get("itemprop", None) == "datePublished":
-                    return tag.get("content", None)
+                return tag.get("content", None)
         contenedor = soup.find(class_='fecha')
         if(contenedor is not None):
             fechaCompleta = contenedor.getText()
@@ -141,7 +142,7 @@ def getFechaClarin(soup):
     return "FECHA NO ENCONTRADA"
 
 
-def getHtml(req):
+def getHtmlSoup(req):
     try:
         resp = urllib.request.urlopen(req)
         html = resp.read()
@@ -153,7 +154,7 @@ def getHtml(req):
 
 
 def buscarLinksEnGoogle(posts):
-#    for i in range(0, len(posts)):
+    #    for i in range(0, len(posts)):
     for i in range(87, 89):
         try:
             print(i)
@@ -178,8 +179,8 @@ def buscarLinksEnGoogle(posts):
                 posts[i].append("LINK Borrado")
                 continue
 
-            domain = ObtenerDominioUrlMapeado(link_url)
-            print(domain)
+            dominio = ObtenerDominioUrlMapeado(link_url)
+            print(dominio)
 
             # Buscar el link en base a los datos que tengo
             # texto del post
@@ -188,13 +189,14 @@ def buscarLinksEnGoogle(posts):
             linkMismoDominio = []
             for url in search(titulo_post, tld='com.ar', lang='es', stop=5):
                 print(url)
-                if(domain in url):
-                    print('mismo dominio')
-                    print(url)
+                if(dominio in url):
+                    # print('mismo dominio')
+                    # print(url)
                     linkMismoDominio.append(url)
 
             # Siempre doy prioridad al orden de google porque es mas problable que sea
-            # mejor su medida de similitud que la que podamos calcular por nuestros medios
+            # mejor su medida de similitud que la que podamos calcular por
+            # nuestros medios
 
             if (len(linkMismoDominio) == 1):
                 posts[i].append(linkMismoDominio[0])
@@ -203,15 +205,14 @@ def buscarLinksEnGoogle(posts):
                     print('Mas de uno aca ver por fecha y dsp por mineria de texto')
                     # FIXME: en base a si es la nacion o clarin buscar la fecha
                     print(linkMismoDominio)
-                    #posts[i].append("LINK Mas de Uno")
 
-                    #Si tengo varios link pueden ser del dia o no
-                    #entonces descarto los que son de una fecha posterior al posteo de facebook
-                    #si es mas de uno entonces distingo por mineria de texto
+                    # Si tengo varios link pueden ser del dia o no
+                    # entonces descarto los que son de una fecha posterior al posteo de facebook
+                    # si es mas de uno entonces distingo por mineria de texto
 
                     for l in linkMismoDominio:
                         req = urllib.request.Request(l)
-                        soup = getHtml(req)
+                        soup = getHtmlSoup(req)
                         if('clarin' in l):
                             fecha_portal = getFechaClarin(soup)
                             fecha_portal = datetime.datetime.strptime(
@@ -245,18 +246,18 @@ def buscarLinksEnGoogle(posts):
     return posts
 
 
-def loadCsvIntoDataSet(nombreArchivoEntrada):
+def cargarCSVEnDataSet(nombreArchivoEntrada):
     csv = pd.read_csv(nombreArchivoEntrada, header=0,
                       sep=';', quotechar='\"', encoding="utf-8")
     return csv.values
 
 
-def saveInCsv(postsFinal, nombreArchivoSalida):
-    columns = ['post_id', 'post_link', 'link',
-               'post_fecha', 'post_titulo', 'post_subtitulo', 'UrlCompleta']
+def guardarEnCSV(posteos, nombreArchivoSalida):
+    columnas = ['post_id', 'post_link', 'link',
+                'post_fecha', 'post_titulo', 'post_subtitulo', 'UrlCompleta']
 
-    df = pd.DataFrame(data=postsFinal, columns=columns)
-    df.to_csv(nombreArchivoSalida, index=False, columns=columns, sep=';',
+    df = pd.DataFrame(data=posteos, columns=columnas)
+    df.to_csv(nombreArchivoSalida, index=False, columns=columnas, sep=';',
               quoting=csv.QUOTE_ALL, doublequote=True, quotechar='"', encoding="utf-16")
 
 
@@ -267,6 +268,6 @@ def armarRutaDatos(nombreArchivo):
 
 nombreArchivoEntrada = armarRutaDatos('buscarEnGoogle_485.csv')
 nombreArchivoSalida = armarRutaDatos('post_output.csv')
-posts = loadCsvIntoDataSet(nombreArchivoEntrada).tolist()
+posts = cargarCSVEnDataSet(nombreArchivoEntrada).tolist()
 postsConTitulo = buscarLinksEnGoogle(posts)
-saveInCsv(postsConTitulo, nombreArchivoSalida)
+guardarEnCSV(postsConTitulo, nombreArchivoSalida)
