@@ -91,7 +91,7 @@ def getTituloFacebook(url):
         html = html.replace(b'-->', b'')  # Cierre Comentario
         # print(html)
         content = bs4.BeautifulSoup(html, 'lxml')
- 
+
         b = content.find_all('div', {'class': 'mbs _6m6 _2cnj _5s6c'})
         if b:
             titulo_post = b[0].getText()
@@ -123,10 +123,10 @@ def getFechaNacion(soup):
             fechaCompleta = fechaCompleta.strip()
             locale.setlocale(locale.LC_TIME, 'es_AR')
             if('•' in contenedor.getText()):
-                fechaCompleta = datetime.strptime(
+                fechaCompleta = datetime.datetime.strptime(
                     fechaCompleta, '%d %B %Y %H:%M')
             else:
-                fechaCompleta = datetime.strptime(
+                fechaCompleta = datetime.datetime.strptime(
                     fechaCompleta, '%d %B %Y')
             fechaNacion = fechaCompleta.strftime('%d/%m/%Y %H:%M:%S')
     except Exception as ex:
@@ -153,8 +153,8 @@ def getHtml(req):
 
 
 def buscarLinksEnGoogle(posts):
-    for i in range(0, len(posts)):
-#    for i in range(87, 88):
+#    for i in range(0, len(posts)):
+    for i in range(87, 89):
         try:
             print(i)
             post_link = posts[i][1]
@@ -188,8 +188,6 @@ def buscarLinksEnGoogle(posts):
             linkMismoDominio = []
             for url in search(titulo_post, tld='com.ar', lang='es', stop=5):
                 print(url)
-                # FIXME: si es uno solo entonces es el link que busco
-                # FIXME: buscar la fecha a ver si coincide cuando hay mas de uno
                 if(domain in url):
                     print('mismo dominio')
                     print(url)
@@ -207,12 +205,20 @@ def buscarLinksEnGoogle(posts):
                     print(linkMismoDominio)
                     #posts[i].append("LINK Mas de Uno")
 
+                    #Si tengo varios link pueden ser del dia o no
+                    #entonces descarto los que son de una fecha posterior al posteo de facebook
+                    #si es mas de uno entonces distingo por mineria de texto
+
                     for l in linkMismoDominio:
                         req = urllib.request.Request(l)
                         soup = getHtml(req)
                         if('clarin' in l):
                             fecha_portal = getFechaClarin(soup)
-                            if(fecha_portal == post_fecha):
+                            fecha_portal = datetime.datetime.strptime(
+                                fecha_portal, '%Y-%m-%d %H:%M:%S')
+                            post_fecha = datetime.datetime.strptime(
+                                post_fecha, '%Y-%m-%d')
+                            if(fecha_portal <= post_fecha):
                                 posts[i].append(l)
                                 break
                         else:
@@ -236,7 +242,7 @@ def buscarLinksEnGoogle(posts):
             print("TIME OUT")
             print(ex)
 
-    return posts    
+    return posts
 
 
 def loadCsvIntoDataSet(nombreArchivoEntrada):
