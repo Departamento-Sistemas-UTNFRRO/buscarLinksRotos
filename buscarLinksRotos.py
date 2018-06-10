@@ -25,6 +25,7 @@ import bs4
 import datetime
 import locale
 from googlesearch import search
+import TFIDF
 import time
 
 dominiosMapeados = {
@@ -210,7 +211,7 @@ def buscarLinksEnGoogle(posts, inicio, fin):
                         else:
                             continue
 
-                    if("FECHA NO ENCONTRADA" == fecha_portal):
+                    if(fecha_portal == "FECHA NO ENCONTRADA"):
                         continue
 
                     fecha_portal = datetime.datetime.strptime(
@@ -222,16 +223,25 @@ def buscarLinksEnGoogle(posts, inicio, fin):
             # Siempre doy prioridad al orden de google porque es mas problable que sea
             # mejor su medida de similitud que la que podamos calcular por
             # nuestros medios
-            if (len(linkMismoDominio) > 1):
-                print("Necesito Distancia de Texto")
-                posts[i].append("Necesito Distancia de Texto")
+            cantidadLinksMismoDominio = len(linkMismoDominio)
+            
+            if cantidadLinksMismoDominio == 1:
+                posts[i].append(linkMismoDominio[0])
             else:
-                if (len(linkMismoDominio) == 1):
-                    posts[i].append(linkMismoDominio[0])
-                else:
+                if cantidadLinksMismoDominio == 0:
                     print("No encontre link")
                     posts[i].append("No encontre link")
+                else:
+                    print("Necesito Distancia de Texto")
+                    TERM = titulo_post
+                    tfidf = TFIDF.TfIdf()
+                    linkMasProximo = tfidf.getNearestLinkToTerm(linkMismoDominio, TERM)
+                    if linkMasProximo is None:
+                        posts[i].append("No encontre link")
+                    else:
+                        posts[i].append(linkMasProximo)
 
+            # esperar unos segundos para que nos banee google
             time.sleep(10)
         except Exception as ex:
             columnas = len(posts[i]) + 1
