@@ -35,12 +35,6 @@ dominiosMapeados = {
     'deporteshd.clarin.com': 'www.clarin.com'
 }
 
-textosAOmitir = [
-    'LA NACION shared a link',
-    'Diario Clarín shared a link.',
-    '\\N'
-]
-
 
 def alargar_url(req):
     try:
