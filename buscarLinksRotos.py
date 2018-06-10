@@ -158,10 +158,8 @@ def getHtmlSoup(req):
         return None
 
 
-def buscarLinksEnGoogle(posts):
-    #for i in range(0, len(posts)):
-    #for i in range(158, len(posts)):
-    for i in range(0, len(posts)):
+def buscarLinksEnGoogle(posts, inicio, fin):
+    for i in range(inicio, fin):
         try:
             print(i)
             post_link = posts[i][1]
@@ -201,7 +199,7 @@ def buscarLinksEnGoogle(posts):
                 url_larga = alargar_url(req)
                 if (url_larga is not None):
                     linkMismoDominio.append(url_larga)
-            except Exception as identifier:
+            except Exception:
                 pass
 
             texto_a_buscar = titulo_post.replace('"', '') + " " + dominio
@@ -274,5 +272,9 @@ def armarRutaDatos(nombreArchivo):
 nombreArchivoEntrada = armarRutaDatos('buscarEnGoogle_restantes.csv')
 nombreArchivoSalida = armarRutaDatos('post_output.csv')
 posts = cargarCSVEnDataSet(nombreArchivoEntrada).tolist()
-postsConTitulo = buscarLinksEnGoogle(posts)
+
+inicio = 0
+fin = len(posts)
+
+postsConTitulo = buscarLinksEnGoogle(posts, inicio, fin)
 guardarEnCSV(postsConTitulo, nombreArchivoSalida)
