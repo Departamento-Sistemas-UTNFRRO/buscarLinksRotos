@@ -1,3 +1,5 @@
+#Codigo original tomado de https://github.com/bitemyapp/tf-idf-1
+
 import math
 
 
