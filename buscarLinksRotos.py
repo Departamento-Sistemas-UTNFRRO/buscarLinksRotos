@@ -25,7 +25,7 @@ import bs4
 import datetime
 import locale
 from googlesearch import search
-
+import time
 
 dominiosMapeados = {
     'a.ln.com.ar': 'www.lanacion',
@@ -88,12 +88,13 @@ def getTituloFacebook(urlLink):
         # Por ejemplo:
         # <div class="hidden_elem"><code id="u_0_q"><!-- <div class="_5pcb _3z-f"> --></code>
 
-        html = html.replace('<!--', '')  # Apertura comentario
-        html = html.replace('-->', '')  # Cierre Comentario
+        html = html.replace(b'<!--', b'')  # Apertura comentario
+        html = html.replace(b'-->', b'')  # Cierre Comentario
         # print(html)
         contenido = bs4.BeautifulSoup(html, 'lxml')
 
-        divTitulo = contenido.find_all('div', {'class': 'mbs _6m6 _2cnj _5s6c'})
+        divTitulo = contenido.find_all(
+            'div', {'class': 'mbs _6m6 _2cnj _5s6c'})
         if divTitulo:
             titulo_post = divTitulo[0].getText()
 
@@ -129,13 +130,17 @@ def getFechaNacion(soup):
             else:
                 fechaCompleta = datetime.datetime.strptime(
                     fechaCompleta, '%d %B %Y')
-            fechaNacion = fechaCompleta.strftime('%d/%m/%Y %H:%M:%S')
+            fechaNacion = fechaCompleta.strftime('%Y-%m-%d %H:%M:%S')
     except Exception as ex:
         print("ERROR" + str(ex))
     return fechaNacion
 
 
 def getFechaClarin(soup):
+    fechaNacion = "FECHA NO ENCONTRADA"
+    if (soup is None):
+        return fechaNacion
+
     for tag in soup.find_all("meta"):
         if tag.get("itemprop", None) == "datePublished":
             return tag.get("content", None)
@@ -154,13 +159,15 @@ def getHtmlSoup(req):
 
 
 def buscarLinksEnGoogle(posts):
-    #    for i in range(0, len(posts)):
-    for i in range(87, 89):
+    #for i in range(0, len(posts)):
+    #for i in range(158, len(posts)):
+    for i in range(0, len(posts)):
         try:
             print(i)
             post_link = posts[i][1]
             link_url = posts[i][2]
             post_fecha = posts[i][3]
+            post_fecha = datetime.datetime.strptime(post_fecha, '%Y-%m-%d').date()
             print(link_url)
 
             titulo_post, subtitulo_post = getTituloFacebook(post_link)
@@ -169,15 +176,15 @@ def buscarLinksEnGoogle(posts):
             posts[i].append(titulo_post)
             posts[i].append(subtitulo_post)
 
-            if('youtu.be' in link_url):
+            if('youtu.be' in link_url or 'tapas.clarin.com' in link_url):
                 print('Omitiendo')
                 posts[i].append("LINK NULL")
                 continue
 
-            if(titulo_post == ""):
-                print('Omitiendo')
-                posts[i].append("LINK Borrado")
-                continue
+            # if(titulo_post == ""):
+            #    print('Omitiendo')
+            #    posts[i].append("LINK Borrado")
+            #    continue
 
             dominio = ObtenerDominioUrlMapeado(link_url)
             print(dominio)
@@ -187,59 +194,57 @@ def buscarLinksEnGoogle(posts):
             # de los resultados elegir segun la fecha tmb
 
             linkMismoDominio = []
-            for url in search(titulo_post, tld='com.ar', lang='es', stop=5):
+
+            # en caso que funcione el link lo agrego directamente
+            try:
+                req = urllib.request.Request(link_url)
+                url_larga = alargar_url(req)
+                if (url_larga is not None):
+                    linkMismoDominio.append(url_larga)
+            except Exception as identifier:
+                pass
+
+            texto_a_buscar = titulo_post.replace('"', '') + " " + dominio
+            for url in search(texto_a_buscar, tld='com.ar', lang='es', stop=5):
                 print(url)
                 if(dominio in url):
-                    # print('mismo dominio')
-                    # print(url)
-                    linkMismoDominio.append(url)
+                    req = urllib.request.Request(url)
+                    soup = getHtmlSoup(req)
+                    if('clarin' in url):
+                        fecha_portal = getFechaClarin(soup)
+                    else:
+                        if ('nacion' in url):
+                            fecha_portal = getFechaNacion(soup)
+                        else:
+                            continue
+
+                    if("FECHA NO ENCONTRADA" == fecha_portal):
+                        continue
+
+                    fecha_portal = datetime.datetime.strptime(
+                        fecha_portal, '%Y-%m-%d %H:%M:%S')
+                    fecha_portal = fecha_portal.date()
+                    if(fecha_portal <= post_fecha):
+                        linkMismoDominio.append(url)
 
             # Siempre doy prioridad al orden de google porque es mas problable que sea
             # mejor su medida de similitud que la que podamos calcular por
             # nuestros medios
-
-            if (len(linkMismoDominio) == 1):
-                posts[i].append(linkMismoDominio[0])
+            if (len(linkMismoDominio) > 1):
+                print("Necesito Distancia de Texto")
+                posts[i].append("Necesito Distancia de Texto")
             else:
-                if (len(linkMismoDominio) > 1):
-                    print('Mas de uno aca ver por fecha y dsp por mineria de texto')
-                    # FIXME: en base a si es la nacion o clarin buscar la fecha
-                    print(linkMismoDominio)
-
-                    # Si tengo varios link pueden ser del dia o no
-                    # entonces descarto los que son de una fecha posterior al posteo de facebook
-                    # si es mas de uno entonces distingo por mineria de texto
-
-                    for l in linkMismoDominio:
-                        req = urllib.request.Request(l)
-                        soup = getHtmlSoup(req)
-                        if('clarin' in l):
-                            fecha_portal = getFechaClarin(soup)
-                            fecha_portal = datetime.datetime.strptime(
-                                fecha_portal, '%Y-%m-%d %H:%M:%S')
-                            post_fecha = datetime.datetime.strptime(
-                                post_fecha, '%Y-%m-%d')
-                            if(fecha_portal <= post_fecha):
-                                posts[i].append(l)
-                                break
-                        else:
-                            if ('nacion' in l):
-                                fecha_portal = getFechaNacion(soup)
-                                if(fecha_portal == post_fecha):
-                                    posts[i].append(l)
-                                    break
-                            else:
-                                print('ERROR')
-                                posts[i].append("LINK Mas de Uno")
+                if (len(linkMismoDominio) == 1):
+                    posts[i].append(linkMismoDominio[0])
                 else:
-                    # FIXME: en base a si es la nacion o clarin buscar la fecha
-                    print('No encontre link')
-                    print(linkMismoDominio)
-                    posts[i].append("LINK ninguno")
+                    print("No encontre link")
+                    posts[i].append("No encontre link")
+
+            time.sleep(10)
         except Exception as ex:
             columnas = len(posts[i]) + 1
             for _ in range(columnas, 8):
-                posts[i].append("TIME OUT")
+                posts[i].append("TIME OUT" + str(ex))
             print("TIME OUT")
             print(ex)
 
@@ -248,7 +253,7 @@ def buscarLinksEnGoogle(posts):
 
 def cargarCSVEnDataSet(nombreArchivoEntrada):
     csv = pd.read_csv(nombreArchivoEntrada, header=0,
-                      sep=';', quotechar='\"', encoding="utf-8")
+                      sep=',', quotechar='\"', encoding="utf-8")
     return csv.values
 
 
@@ -266,7 +271,7 @@ def armarRutaDatos(nombreArchivo):
     return rutaADatos
 
 
-nombreArchivoEntrada = armarRutaDatos('buscarEnGoogle_485.csv')
+nombreArchivoEntrada = armarRutaDatos('buscarEnGoogle_restantes.csv')
 nombreArchivoSalida = armarRutaDatos('post_output.csv')
 posts = cargarCSVEnDataSet(nombreArchivoEntrada).tolist()
 postsConTitulo = buscarLinksEnGoogle(posts)
