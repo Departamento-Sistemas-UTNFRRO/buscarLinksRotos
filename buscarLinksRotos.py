@@ -224,7 +224,7 @@ def buscarLinksEnGoogle(posts, inicio, fin):
             # mejor su medida de similitud que la que podamos calcular por
             # nuestros medios
             cantidadLinksMismoDominio = len(linkMismoDominio)
-            
+
             if cantidadLinksMismoDominio == 1:
                 posts[i].append(linkMismoDominio[0])
             else:
