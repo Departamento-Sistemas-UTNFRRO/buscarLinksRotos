@@ -18,9 +18,11 @@ class Tokenizer:
 class DocumentLink(object):
     def __init__(self, linkUrl):
         self.Link = linkUrl
-        self.Document = self.convertLinkToDocument(linkUrl)
+        self.Document = self._convertLinkToDocument(linkUrl)
+        self.DocumentTokens = Tokenizer.tokenize(self.Document)
+        self.DocumentTokensCount = len(self.DocumentTokens)
 
-    def convertLinkToDocument(self, link):
+    def _convertLinkToDocument(self, link):
         link = link.replace('http://', ' ')
         link = link.replace('https://', ' ')
         link = link.replace('.html', ' ')
@@ -39,18 +41,17 @@ class TfIdf:
     def __init__(self, documents=None):
         self.documents = documents
 
+    # FIXME: para a la clase documento esto
     def word_frequency(self, word, tokens):
         """ How many times does a word appear in a document? """
         return tokens.count(word)
 
     def document_term_frequency(self, term, document):
-        tokens = Tokenizer.tokenize(document)
-        return self.word_frequency(term, tokens)
+        return self.word_frequency(term, document.DocumentTokens)
 
     def tf(self, term, document):
-        tokens = Tokenizer.tokenize(document)
-        word_count = len(tokens)
-        term_occurs = self.word_frequency(term, tokens)
+        word_count = document.DocumentTokensCount
+        term_occurs = self.document_term_frequency(term, document)
         return term_occurs / float(word_count)
 
     def docs_containing_term(self, term, documents):
@@ -78,9 +79,9 @@ class TfIdf:
     def generateDocumentRanking(self, doc_list, Term):
         """Return orderer ranking based on search term"""
         ranking = {}
+        tokens = Tokenizer.tokenize(Term)
         for d in doc_list:
             tdidf = 0.0
-            tokens = Tokenizer.tokenize(Term)
             for token in tokens:
                 tdidf = tdidf + self.tf_idf(token, d, doc_list)
             ranking[d] = tdidf
@@ -96,17 +97,16 @@ class TfIdf:
         link = link.replace('"', ' ')
         return link
 
-    def getNearestLinkToTerm(self, linklist, Term):
+    def getNearestLinkToTerm(self, linklist, titulo_post):
         doc_list = []
         for l in linklist:
             doc_list.append(DocumentLink(l))
 
-        Term = self.cleanDocument(Term)
+        titulo_post = self.cleanDocument(titulo_post)
 
-        ranking = self.generateDocumentRanking(doc_list, Term)
+        ranking = self.generateDocumentRanking(doc_list, titulo_post)
         ranking = sorted(ranking.items(), key=lambda t: t[1], reverse=True)
         nearestDocument = ranking[0]
         if nearestDocument[1] == 0.0:
             return None
         return nearestDocument[0].Link
-

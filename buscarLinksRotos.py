@@ -1,35 +1,35 @@
 # -*- coding: utf-8 -*-
-#    This file is part of buscarEnPortalesDiarios.
+#    This file is part of buscarLinksRotos.
 #
-#    buscarEnPortalesDiarios is free software; you can redistribute it and/or modify
+#    buscarLinksRotos is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
 #    the Free Software Foundation; either version 3 of the License, or
 #    (at your option) any later version.
 #
-#    buscarEnPortalesDiarios is distributed in the hope that it will be useful,
+#    buscarLinksRotos is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #    GNU General Public License for more details.
 #
 #    You should have received a copy of the GNU General Public License
-#    along with buscarEnPortalesDiarios; if not, write to the Free Software
+#    along with buscarLinksRotos; if not, write to the Free Software
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 import urllib.request
-import pandas as pd
-import os
 import urllib.parse
-import csv
 import bs4
 import datetime
 import locale
 from googlesearch import search
 import TFIDF
 import time
+from pyfbutils.DataSetCSV import DataSetCSV
+from pyfbutils.PostFacebook import PostFacebook
+
 
 dominiosMapeados = {
-    'a.ln.com.ar': 'www.lanacion',
+    'a.ln.com.ar': 'www.lanacion.com.ar',
     'clar.in': 'www.clarin.com',
     'mundial-brasil-2014.clarin.com': 'www.clarin.com',
     'arq.clarin.com': 'www.clarin.com',
@@ -58,46 +58,6 @@ def ObtenerDominioUrlMapeado(urlLink):
         if(viejo in dominio):
             dominio = dominio.replace(viejo, nuevo)
     return dominio
-
-
-def getHtmlFacebook(urlLink):
-    html = ""
-
-    try:
-        request = urllib.request.Request(urlLink)
-        resp = urllib.request.urlopen(request)
-        html = resp.read()
-    except Exception as ex:
-        print("ERROR" + str(ex))
-    return html
-
-
-def getTituloFacebook(urlLink):
-    html = getHtmlFacebook(urlLink)
-    titulo_post = ""
-    subtitulo_post = ""
-
-    if (html is not None):
-        # El html de facebook viene en una etiqueta "code" comentada y se arma dinamico con Javascript
-        # para poder interpretarlo, sacamos el comentario y lo pasamos normalmente al parseador
-        # Por ejemplo:
-        # <div class="hidden_elem"><code id="u_0_q"><!-- <div class="_5pcb _3z-f"> --></code>
-
-        html = html.replace(b'<!--', b'')  # Apertura comentario
-        html = html.replace(b'-->', b'')  # Cierre Comentario
-        # print(html)
-        contenido = bs4.BeautifulSoup(html, 'lxml')
-
-        divTitulo = contenido.find_all(
-            'div', {'class': 'mbs _6m6 _2cnj _5s6c'})
-        if divTitulo:
-            titulo_post = divTitulo[0].getText()
-
-        divSubtitulo = contenido.find_all('div', {'class': '_6m7 _3bt9'})
-        if divSubtitulo and len(divSubtitulo) > 0:
-            subtitulo_post = divSubtitulo[0].getText()
-
-    return (titulo_post, subtitulo_post)
 
 
 def getFechaNacion(soup):
@@ -153,21 +113,24 @@ def getHtmlSoup(req):
         return None
 
 
-def buscarLinksEnGoogle(posts, inicio, fin):
-    for i in range(inicio, fin):
+def buscarLinksEnGoogle(datasetCSV):
+    posts = datasetCSV.dataset
+
+    for i in range(datasetCSV.inicio, datasetCSV.fin):
         try:
             print(i)
             post_link = posts[i][1]
+            postFacebook = PostFacebook(post_link)
             link_url = posts[i][2]
-            post_fecha = posts[i][3]
-            post_fecha = datetime.datetime.strptime(post_fecha, '%Y-%m-%d').date()
             print(link_url)
+            # FIXME: incorporar en clase post
+            post_fecha = convertirTextoAFecha(posts[i][3])
 
-            titulo_post, subtitulo_post = getTituloFacebook(post_link)
-            print(titulo_post)
-
+            datosPost = postFacebook.getInfoPostFacebook()
+            titulo_post = datosPost[0]
             posts[i].append(titulo_post)
-            posts[i].append(subtitulo_post)
+            posts[i].append(datosPost[1])
+            print(datosPost[0])
 
             if('youtu.be' in link_url or 'tapas.clarin.com' in link_url):
                 print('Omitiendo')
@@ -233,9 +196,8 @@ def buscarLinksEnGoogle(posts, inicio, fin):
                     posts[i].append("No encontre link")
                 else:
                     print("Necesito Distancia de Texto")
-                    TERM = titulo_post
                     tfidf = TFIDF.TfIdf()
-                    linkMasProximo = tfidf.getNearestLinkToTerm(linkMismoDominio, TERM)
+                    linkMasProximo = tfidf.getNearestLinkToTerm(linkMismoDominio, titulo_post)
                     if linkMasProximo is None:
                         posts[i].append("No encontre link")
                     else:
@@ -245,40 +207,24 @@ def buscarLinksEnGoogle(posts, inicio, fin):
             time.sleep(10)
         except Exception as ex:
             columnas = len(posts[i]) + 1
-            for _ in range(columnas, 8):
+            for _ in range(columnas, datasetCSV.cantidadColumnas):
                 posts[i].append("TIME OUT" + str(ex))
             print("TIME OUT")
             print(ex)
 
-    return posts
+
+def convertirTextoAFecha(fechaTexto):
+    post_fecha = datetime.datetime.strptime(fechaTexto, '%Y-%m-%d').date()
+    return post_fecha
 
 
-def cargarCSVEnDataSet(nombreArchivoEntrada):
-    csv = pd.read_csv(nombreArchivoEntrada, header=0,
-                      sep=',', quotechar='\"', encoding="utf-8")
-    return csv.values
-
-
-def guardarEnCSV(posteos, nombreArchivoSalida):
-    columnas = ['post_id', 'post_link', 'link',
-                'post_fecha', 'post_titulo', 'post_subtitulo', 'UrlCompleta']
-
-    df = pd.DataFrame(data=posteos, columns=columnas)
-    df.to_csv(nombreArchivoSalida, index=False, columns=columnas, sep=';',
-              quoting=csv.QUOTE_ALL, doublequote=True, quotechar='"', encoding="utf-16")
-
-
-def armarRutaDatos(nombreArchivo):
-    rutaADatos = os.path.join(os.path.dirname(__file__), 'data', nombreArchivo)
-    return rutaADatos
-
-
-nombreArchivoEntrada = armarRutaDatos('buscarEnGoogle_restantes.csv')
-nombreArchivoSalida = armarRutaDatos('post_output.csv')
-posts = cargarCSVEnDataSet(nombreArchivoEntrada).tolist()
+nombreArchivoEntrada = 'buscarEnGoogle_restantes.csv'
+nombreArchivoSalida = 'post_output.csv'
+columnas = ['post_id', 'post_link', 'link', 'post_fecha', 'post_titulo', 'post_subtitulo', 'UrlCompleta']
 
 inicio = 0
-fin = len(posts)
+fin = None
 
-postsConTitulo = buscarLinksEnGoogle(posts, inicio, fin)
-guardarEnCSV(postsConTitulo, nombreArchivoSalida)
+datasetCSV = DataSetCSV(nombreArchivoEntrada, nombreArchivoSalida, columnas, inicio, fin)
+buscarLinksEnGoogle(datasetCSV)
+datasetCSV.guardar()
