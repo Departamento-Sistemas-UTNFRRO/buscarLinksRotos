@@ -20,7 +20,6 @@ import TFIDF
 import time
 from googlesearch import search
 from pyfbutils.DataSetCSV import DataSetCSV
-from pyfbutils.PostFacebook import PostFacebook
 from pyfbutils.Link import Link
 from pyfbutils.ClarinPost import ClarinPost
 from pyfbutils.NacionPost import NacionPost
@@ -32,7 +31,7 @@ def buscarLinksEnGoogle(datasetCSV):
     for i in range(datasetCSV.inicio, datasetCSV.fin):
         try:
             print(i)
-            post_link = posts[i][1]
+            # post_link = posts[i][1]
             link_url = posts[i][2]
             print(link_url)
 
@@ -45,14 +44,15 @@ def buscarLinksEnGoogle(datasetCSV):
                 posts[i].append("LINK NULL")
                 continue
 
-            postFacebook = PostFacebook(post_link)
-            datosPost = postFacebook.getInfoPostFacebook()
-            titulo_post = datosPost[0]
-            posts[i].append(titulo_post)
-            posts[i].append(datosPost[1])
-            print(titulo_post)
+            # postFacebook = PostFacebook(post_link)
+            # datosPost = postFacebook.getInfoPostFacebook()
+            # titulo_post = datosPost[0] # esto desde el csv
+            # posts[i].append(titulo_post)
+            # posts[i].append(datosPost[1])
 
             post_fecha = convertirTextoAFecha(posts[i][3])
+            titulo_post = posts[i][4]
+            print(titulo_post)
 
             # Buscar el link en base a los datos que tengo
             # texto del post
@@ -67,25 +67,24 @@ def buscarLinksEnGoogle(datasetCSV):
             texto_a_buscar = titulo_post.replace('"', '') + " " + link.linkDomain
             for url in search(texto_a_buscar, tld='com.ar', lang='es', stop=5):
                 print(url)
-                if(link.linkDomain in url):
-                    # FIXME: aca puedo usar la clase link de nuevo??
-                    if('clarin' in url):
-                        postPortal = ClarinPost(link)
-                        fecha_portal = postPortal.getFecha()
-                    else:
-                        if ('nacion' in url):
-                            postPortal = NacionPost(link)
-                            fecha_portal = postPortal.getFecha()
-                        else:
-                            continue
 
-                    if(fecha_portal == "FECHA NO ENCONTRADA"):
+                linkNuevo = Link(url)
+
+                if('clarin' in url):
+                    postPortal = ClarinPost(linkNuevo)
+                else:
+                    if ('nacion' in url):
+                        postPortal = NacionPost(linkNuevo)
+                    else:
                         continue
 
-                    fecha_portal = datetime.datetime.strptime(
-                        fecha_portal, '%Y-%m-%d %H:%M:%S').date()
-                    if(fecha_portal <= post_fecha):
-                        linkMismoDominio.append(url)
+                fecha_portal = postPortal.getFecha()
+                if(fecha_portal == "FECHA NO ENCONTRADA"):
+                    continue
+
+                fecha_portal = datetime.datetime.strptime(fecha_portal, '%Y-%m-%d').date()
+                if(fecha_portal <= post_fecha):
+                    linkMismoDominio.append(url)
 
             # Siempre doy prioridad al orden de google porque es mas problable que sea
             # mejor su medida de similitud que la que podamos calcular por
@@ -103,10 +102,13 @@ def buscarLinksEnGoogle(datasetCSV):
                     tfidf = TFIDF.TfIdf()
                     linkMasProximo = tfidf.getNearestLinkToTerm(linkMismoDominio, titulo_post)
                     if linkMasProximo is None:
+                        print("No encontre link")
                         posts[i].append("No encontre link")
                     else:
+                        print(linkMasProximo)
                         posts[i].append(linkMasProximo)
 
+            posts[i].append(linkMasProximo)
             # esperar unos segundos para que nos banee google
             time.sleep(10)
         except Exception as ex:
@@ -115,6 +117,7 @@ def buscarLinksEnGoogle(datasetCSV):
                 posts[i].append("TIME OUT" + str(ex))
             print("TIME OUT")
             print(ex)
+            time.sleep(30)
 
 
 def convertirTextoAFecha(fechaTexto):
@@ -122,9 +125,9 @@ def convertirTextoAFecha(fechaTexto):
     return post_fecha
 
 
-nombreArchivoEntrada = 'buscarEnGoogle_restantes.csv'
+nombreArchivoEntrada = 'post_input.csv'
 nombreArchivoSalida = 'post_output.csv'
-columnas = ['post_id', 'post_link', 'link', 'post_fecha', 'post_titulo', 'post_subtitulo', 'UrlCompleta']
+columnas = ['post_id', 'post_link', 'link', 'post_fecha', 'x', 'post_subtitulo', 'UrlCompleta']
 
 inicio = 0
 fin = None

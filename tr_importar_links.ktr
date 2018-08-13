@@ -77,25 +77,27 @@
   </notepads>
   <connection>
     <name>mysqlcx</name>
-    <server>192.168.0.104</server>
+    <server>localhost</server>
     <type>MYSQL</type>
     <access>Native</access>
-    <database>analisis_post</database>
+    <database>facebook_clarin_nacion</database>
     <port>3306</port>
     <username>root</username>
-    <password>Encrypted 2be98afc86aa7f2e4cb79ce10cc9da0ce</password>
+    <password>Encrypted 2be98afc86aa7f2b2a213a17edfd1fc8c</password>
     <servername/>
     <data_tablespace/>
     <index_tablespace/>
     <attributes>
+      <attribute><code>EXTRA_OPTION_MYSQL.characterEncoding</code><attribute>utf8mb4</attribute></attribute>
       <attribute><code>EXTRA_OPTION_MYSQL.defaultFetchSize</code><attribute>500</attribute></attribute>
       <attribute><code>EXTRA_OPTION_MYSQL.useCursorFetch</code><attribute>true</attribute></attribute>
+      <attribute><code>EXTRA_OPTION_MYSQL.useUnicode</code><attribute>true</attribute></attribute>
       <attribute><code>FORCE_IDENTIFIERS_TO_LOWERCASE</code><attribute>N</attribute></attribute>
       <attribute><code>FORCE_IDENTIFIERS_TO_UPPERCASE</code><attribute>N</attribute></attribute>
       <attribute><code>IS_CLUSTERED</code><attribute>N</attribute></attribute>
       <attribute><code>PORT_NUMBER</code><attribute>3306</attribute></attribute>
       <attribute><code>PRESERVE_RESERVED_WORD_CASE</code><attribute>Y</attribute></attribute>
-      <attribute><code>QUOTE_ALL_FIELDS</code><attribute>N</attribute></attribute>
+      <attribute><code>QUOTE_ALL_FIELDS</code><attribute>Y</attribute></attribute>
       <attribute><code>STREAM_RESULTS</code><attribute>Y</attribute></attribute>
       <attribute><code>SUPPORTS_BOOLEAN_DATA_TYPE</code><attribute>Y</attribute></attribute>
       <attribute><code>SUPPORTS_TIMESTAMP_DATA_TYPE</code><attribute>Y</attribute></attribute>
@@ -120,7 +122,7 @@
     <filename_field/>
     <rownum_field/>
     <include_filename>N</include_filename>
-    <separator>,</separator>
+    <separator>&#x3b;</separator>
     <enclosure>&#x22;</enclosure>
     <header>Y</header>
     <buffer_size>50000</buffer_size>
@@ -131,35 +133,13 @@
     <encoding>UTF-8</encoding>
     <fields>
       <field>
-        <name>tipo_post</name>
-        <type>String</type>
-        <format/>
-        <currency>&#x24;</currency>
-        <decimal>,</decimal>
-        <group>.</group>
-        <length>161</length>
-        <precision>-1</precision>
-        <trim_type>none</trim_type>
-      </field>
-      <field>
         <name>post_id</name>
         <type>String</type>
         <format/>
         <currency>&#x24;</currency>
         <decimal>,</decimal>
         <group>.</group>
-        <length>121</length>
-        <precision>-1</precision>
-        <trim_type>none</trim_type>
-      </field>
-      <field>
-        <name>post_link</name>
-        <type>String</type>
-        <format/>
-        <currency>&#x24;</currency>
-        <decimal>,</decimal>
-        <group>.</group>
-        <length>86</length>
+        <length>33</length>
         <precision>-1</precision>
         <trim_type>none</trim_type>
       </field>
@@ -170,29 +150,7 @@
         <currency>&#x24;</currency>
         <decimal>,</decimal>
         <group>.</group>
-        <length>162</length>
-        <precision>-1</precision>
-        <trim_type>none</trim_type>
-      </field>
-      <field>
-        <name>link_domain</name>
-        <type>String</type>
-        <format/>
-        <currency>&#x24;</currency>
-        <decimal>,</decimal>
-        <group>.</group>
-        <length>60</length>
-        <precision>-1</precision>
-        <trim_type>none</trim_type>
-      </field>
-      <field>
-        <name>post_message</name>
-        <type>String</type>
-        <format/>
-        <currency>&#x24;</currency>
-        <decimal>,</decimal>
-        <group>.</group>
-        <length>48</length>
+        <length>246</length>
         <precision>-1</precision>
         <trim_type>none</trim_type>
       </field>
@@ -203,7 +161,7 @@
         <currency>&#x24;</currency>
         <decimal>,</decimal>
         <group>.</group>
-        <length>162</length>
+        <length>115</length>
         <precision>-1</precision>
         <trim_type>none</trim_type>
       </field>
@@ -225,7 +183,7 @@
         <currency>&#x24;</currency>
         <decimal>,</decimal>
         <group>.</group>
-        <length>16</length>
+        <length>12</length>
         <precision>-1</precision>
         <trim_type>none</trim_type>
       </field>
@@ -236,7 +194,7 @@
         <currency>&#x24;</currency>
         <decimal>,</decimal>
         <group>.</group>
-        <length>68</length>
+        <length>140</length>
         <precision>-1</precision>
         <trim_type>none</trim_type>
       </field>
@@ -247,7 +205,7 @@
         <currency>&#x24;</currency>
         <decimal>,</decimal>
         <group>.</group>
-        <length>342</length>
+        <length>89</length>
         <precision>-1</precision>
         <trim_type>none</trim_type>
       </field>
@@ -258,7 +216,7 @@
         <currency>&#x24;</currency>
         <decimal>,</decimal>
         <group>.</group>
-        <length>234</length>
+        <length>329</length>
         <precision>-1</precision>
         <trim_type>none</trim_type>
       </field>
@@ -269,7 +227,7 @@
         <currency>&#x24;</currency>
         <decimal>,</decimal>
         <group>.</group>
-        <length>3795</length>
+        <length>5432</length>
         <precision>-1</precision>
         <trim_type>none</trim_type>
       </field>
@@ -298,7 +256,7 @@
     <update_bypassed>N</update_bypassed>
     <lookup>
       <schema/>
-      <table>publicaciones_en_portales</table>
+      <table>publicaciones_en_portales_corpus_total</table>
       <key>
         <name>post_id</name>
         <field>post_id</field>
@@ -354,7 +312,179 @@
       </GUI>
     </step>
 
+  <step>
+    <name>Salida Fichero de Texto</name>
+    <type>TextFileOutput</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+         <partitioning>
+           <method>none</method>
+           <schema_name/>
+           </partitioning>
+    <separator>&#x3b;</separator>
+    <enclosure>&#x22;</enclosure>
+    <enclosure_forced>N</enclosure_forced>
+    <enclosure_fix_disabled>N</enclosure_fix_disabled>
+    <header>Y</header>
+    <footer>N</footer>
+    <format>DOS</format>
+    <compression>None</compression>
+    <encoding/>
+    <endedLine/>
+    <fileNameInField>N</fileNameInField>
+    <fileNameField/>
+    <create_parent_folder>Y</create_parent_folder>
+    <file>
+      <name>&#x2f;home&#x2f;pepe&#x2f;git&#x2f;buscarEnPortales&#x2f;data&#x2f;errores.txt</name>
+      <is_command>N</is_command>
+      <servlet_output>N</servlet_output>
+      <do_not_open_new_file_init>N</do_not_open_new_file_init>
+      <extention>txt</extention>
+      <append>Y</append>
+      <split>N</split>
+      <haspartno>N</haspartno>
+      <add_date>N</add_date>
+      <add_time>N</add_time>
+      <SpecifyFormat>N</SpecifyFormat>
+      <date_time_format/>
+      <add_to_result_filenames>Y</add_to_result_filenames>
+      <pad>N</pad>
+      <fast_dump>N</fast_dump>
+      <splitevery>0</splitevery>
+    </file>
+    <fields>
+      <field>
+        <name>post_id</name>
+        <type>String</type>
+        <format/>
+        <currency/>
+        <decimal/>
+        <group/>
+        <nullif/>
+        <trim_type>none</trim_type>
+        <length>33</length>
+        <precision>-1</precision>
+      </field>
+      <field>
+        <name>link</name>
+        <type>String</type>
+        <format/>
+        <currency/>
+        <decimal/>
+        <group/>
+        <nullif/>
+        <trim_type>none</trim_type>
+        <length>246</length>
+        <precision>-1</precision>
+      </field>
+      <field>
+        <name>UrlCompleta</name>
+        <type>String</type>
+        <format/>
+        <currency/>
+        <decimal/>
+        <group/>
+        <nullif/>
+        <trim_type>none</trim_type>
+        <length>115</length>
+        <precision>-1</precision>
+      </field>
+      <field>
+        <name>fecha_hora_diario</name>
+        <type>String</type>
+        <format/>
+        <currency/>
+        <decimal/>
+        <group/>
+        <nullif/>
+        <trim_type>none</trim_type>
+        <length>19</length>
+        <precision>-1</precision>
+      </field>
+      <field>
+        <name>tema</name>
+        <type>String</type>
+        <format/>
+        <currency/>
+        <decimal/>
+        <group/>
+        <nullif/>
+        <trim_type>none</trim_type>
+        <length>12</length>
+        <precision>-1</precision>
+      </field>
+      <field>
+        <name>volanta</name>
+        <type>String</type>
+        <format/>
+        <currency/>
+        <decimal/>
+        <group/>
+        <nullif/>
+        <trim_type>none</trim_type>
+        <length>140</length>
+        <precision>-1</precision>
+      </field>
+      <field>
+        <name>titulo_diario</name>
+        <type>String</type>
+        <format/>
+        <currency/>
+        <decimal/>
+        <group/>
+        <nullif/>
+        <trim_type>none</trim_type>
+        <length>89</length>
+        <precision>-1</precision>
+      </field>
+      <field>
+        <name>bajada</name>
+        <type>String</type>
+        <format/>
+        <currency/>
+        <decimal/>
+        <group/>
+        <nullif/>
+        <trim_type>none</trim_type>
+        <length>329</length>
+        <precision>-1</precision>
+      </field>
+      <field>
+        <name>texto_diario</name>
+        <type>String</type>
+        <format/>
+        <currency/>
+        <decimal/>
+        <group/>
+        <nullif/>
+        <trim_type>none</trim_type>
+        <length>5432</length>
+        <precision>-1</precision>
+      </field>
+    </fields>
+     <cluster_schema/>
+ <remotesteps>   <input>   </input>   <output>   </output> </remotesteps>    <GUI>
+      <xloc>400</xloc>
+      <yloc>208</yloc>
+      <draw>Y</draw>
+      </GUI>
+    </step>
+
   <step_error_handling>
+      <error>
+        <source_step>Insertar &#x2f; Actualizar</source_step>
+        <target_step>Salida Fichero de Texto</target_step>
+        <is_enabled>N</is_enabled>
+        <nr_valuename/>
+        <descriptions_valuename/>
+        <fields_valuename/>
+        <codes_valuename/>
+        <max_errors/>
+        <max_pct_errors/>
+        <min_pct_rows/>
+      </error>
   </step_error_handling>
    <slave-step-copy-partition-distribution>
 </slave-step-copy-partition-distribution>

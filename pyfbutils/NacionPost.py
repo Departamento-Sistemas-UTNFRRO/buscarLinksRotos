@@ -49,7 +49,7 @@ class NacionPost(object):
                 else:
                     fechaCompleta = datetime.strptime(
                         fechaCompleta, '%d %B %Y')
-                fechaNacion = fechaCompleta.strftime('%d/%m/%Y %H:%M:%S')
+                fechaNacion = fechaCompleta.strftime('%Y-%m-%d')
         except Exception as ex:
             print("ERROR" + str(ex))
         return fechaNacion

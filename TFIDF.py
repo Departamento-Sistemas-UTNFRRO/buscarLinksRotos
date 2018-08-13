@@ -62,7 +62,7 @@ class TfIdf:
                 return 1
             else:
                 return 0
-        occurs = [term_occurs(term, d.Document) for d in documents]
+        occurs = [term_occurs(term, d) for d in documents]
         return sum(occurs)
 
     def idf(self, term, documents):
@@ -74,7 +74,7 @@ class TfIdf:
         """ Returns the tf-idf score. A high weight of the tf-idf calculation
             is reached when you have a high term frequency (tf) in the given document (local parameter)
             and a low document frequency of the term in the whole collection (global parameter) """
-        return self.tf(word, document.Document) * self.idf(word, documents)
+        return self.tf(word, document) * self.idf(word, documents)
 
     def generateDocumentRanking(self, doc_list, Term):
         """Return orderer ranking based on search term"""

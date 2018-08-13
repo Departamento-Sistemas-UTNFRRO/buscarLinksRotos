@@ -67,14 +67,14 @@ class Link(object):
             if linkAOmitir in self.linkOriginal:
                 return True
 
-        if self.linkReal is None or pd.isnull(self.linkReal):
-            return True
+#        if self.linkReal is None or pd.isnull(self.linkReal):
+#            return True
 
         return False
 
     def getLinkDomain(self):
         '''Devuelve el dominio del link'''
-        parsed_uri = urllib.parse.urlparse(self.linkReal)
+        parsed_uri = urllib.parse.urlparse(self.linkOriginal)
         return '{uri.netloc}'.format(uri=parsed_uri)
 
     def alargar_url(self, req):

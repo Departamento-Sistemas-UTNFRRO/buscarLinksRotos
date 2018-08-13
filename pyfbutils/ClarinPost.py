@@ -53,10 +53,14 @@ class ClarinPost(object):
         return texto
 
     def getFecha(self):
+        texto = "FECHA NO ENCONTRADA"
+        if self.soup is None:
+            return texto
+
         for tag in self.soup.find_all("meta"):
             if tag.get("itemprop", None) == "datePublished":
                 return tag.get("content", None)
-        return "FECHA NO ENCONTRADA"
+        return texto
 
     def getTema(self):
         texto = "TEMA  NO ENCONTRADO"
